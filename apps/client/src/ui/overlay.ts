@@ -101,6 +101,10 @@ function renderPlacements(): string {
     .join('')}</div>`;
 }
 
+function renderShuffleLegendBadge(): string {
+  return `<span style="display:inline-block; width:14px; height:14px; border-radius:50%; border:1px solid rgba(255,255,255,0.85); vertical-align:-2px; margin:0 2px; background:conic-gradient(#ff4d4f 0deg 90deg, #3b82f6 90deg 180deg, #facc15 180deg 270deg, #22c55e 270deg 360deg);"></span>`;
+}
+
 function renderCenterPanel(): string {
   if (ui.phase === 'menu')
     return `<div class="center-panel">
@@ -121,7 +125,7 @@ function renderCenterPanel(): string {
   </div>`;
 
   if (ui.phase === 'waiting')
-    return `<div class="center-panel"><div class="panel"><div class="title">Lobby</div><div class="subtitle">Share this room id: <strong>${ui.roomCode}</strong><br/>Players in lobby: <strong>${ui.scoreboard.length}</strong><br/>Match duration: <strong>5 minutes</strong><br/>Pickup icons: <strong>↺</strong> reset trails, <strong>◐</strong> shuffle colors</div><button id="startBtn" class="button">Start match</button>${renderScoreboard()}</div></div>`;
+    return `<div class="center-panel"><div class="panel"><div class="title">Lobby</div><div class="subtitle">Share this room id: <strong>${ui.roomCode}</strong><br/>Players in lobby: <strong>${ui.scoreboard.length}</strong><br/>Match duration: <strong>5 minutes</strong><br/>Pickup icons: <strong>↺</strong> reset trails, ${renderShuffleLegendBadge()} shuffle colors</div><button id="startBtn" class="button">Start match</button>${renderScoreboard()}</div></div>`;
 
   if (ui.phase === 'round-end')
     return `<div class="center-panel"><div class="panel"><div class="title">Round finished</div><div class="subtitle">${ui.winnerText || 'Preparing next round...'}</div>${renderPlacements()}${renderScoreboard()}</div></div>`;
@@ -135,8 +139,10 @@ function renderCenterPanel(): string {
 function renderOverlayContent(): void {
   const timeValue =
     ui.phase === 'waiting' ? '05:00' : formatMatchTime(ui.matchRemainingMs);
+  const showTopRow = ui.phase === 'round-end' || ui.phase === 'finished';
 
   overlayEl.innerHTML = `
+    ${showTopRow ? `
     <div class="top-row">
       <div class="card metric">
         <div class="label">Room</div>
@@ -147,6 +153,7 @@ function renderOverlayContent(): void {
         <div class="value">${timeValue}</div>
       </div>
     </div>
+    ` : ''}
 
     ${ui.phase === 'playing' ? `
       <div class="touch-controls">

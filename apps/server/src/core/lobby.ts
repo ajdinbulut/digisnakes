@@ -146,6 +146,7 @@ export function startRound(lobby: Lobby, resetScores: boolean): void {
 
   for (const p of lobby.players.values()) {
     const s = getSpawn(lobby);
+    p.color = p.baseColor;
     p.x = s.x;
     p.y = s.y;
     p.angle = s.angle;

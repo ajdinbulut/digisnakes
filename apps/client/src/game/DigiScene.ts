@@ -6,11 +6,17 @@ import {
   lastState,
 } from '../state/uiState';
 
+const SHUFFLE_PICKUP_COLORS = [0xff4d4f, 0x3b82f6, 0xfacc15, 0x22c55e] as const;
+const WHITE_PLAYER_COLOR = '#ffffff';
+const WHITE_PLAYER_STROKE_COLOR = 0x334155;
+const LOCAL_WHITE_PLAYER_STROKE_COLOR = 0x2563eb;
+
 export class DigiScene extends Phaser.Scene {
   private localTurn: TurnDirection = 0;
   private circles = new Map<string, Phaser.GameObjects.Arc>();
   private trailGraphics!: Phaser.GameObjects.Graphics;
   private pickupCircle!: Phaser.GameObjects.Arc;
+  private pickupBadge!: Phaser.GameObjects.Graphics;
   private pickupText!: Phaser.GameObjects.Text;
   private countdownText!: Phaser.GameObjects.Text;
   private winnerText!: Phaser.GameObjects.Text;
@@ -45,6 +51,7 @@ export class DigiScene extends Phaser.Scene {
     this.pickupCircle = this.add
       .circle(-100, -100, 10, 0xffffff, 1)
       .setVisible(false);
+    this.pickupBadge = this.add.graphics().setVisible(false);
     this.pickupText = this.add
       .text(-100, -100, '', {
         fontFamily: 'Arial',
@@ -76,6 +83,30 @@ export class DigiScene extends Phaser.Scene {
     if (this.localTurn === dir) return;
     this.localTurn = dir;
     socket.emit('turn', { direction: dir });
+  }
+
+  private drawShufflePickupBadge(x: number, y: number): void {
+    this.pickupBadge.clear();
+    this.pickupBadge.setVisible(true);
+
+    const radius = 18;
+    const segmentSize = Math.PI / 2;
+    const startAngle = -Math.PI / 2;
+
+    for (let i = 0; i < SHUFFLE_PICKUP_COLORS.length; i++) {
+      const from = startAngle + i * segmentSize;
+      const to = from + segmentSize;
+
+      this.pickupBadge.fillStyle(SHUFFLE_PICKUP_COLORS[i], 1);
+      this.pickupBadge.beginPath();
+      this.pickupBadge.moveTo(x, y);
+      this.pickupBadge.arc(x, y, radius, from, to, false);
+      this.pickupBadge.closePath();
+      this.pickupBadge.fillPath();
+    }
+
+    this.pickupBadge.lineStyle(3, 0xffffff, 0.95);
+    this.pickupBadge.strokeCircle(x, y, radius);
   }
 
   update() {
@@ -114,7 +145,15 @@ export class DigiScene extends Phaser.Scene {
         Phaser.Display.Color.HexStringToColor(p.color).color,
         p.alive ? 1 : 0.25
       );
-      c.setStrokeStyle(p.id === ui.localPlayerId ? 3 : 0, 0xffffff, 1);
+      const isWhitePlayer = p.color.toLowerCase() === WHITE_PLAYER_COLOR;
+      const isLocalPlayer = p.id === ui.localPlayerId;
+      const strokeWidth = isLocalPlayer ? 3 : isWhitePlayer ? 2 : 0;
+      const strokeColor = isLocalPlayer
+        ? isWhitePlayer
+          ? LOCAL_WHITE_PLAYER_STROKE_COLOR
+          : 0xffffff
+        : WHITE_PLAYER_STROKE_COLOR;
+      c.setStrokeStyle(strokeWidth, strokeColor, strokeWidth > 0 ? 1 : 0);
     }
     for (const [id, c] of this.circles.entries()) {
       if (!active.has(id)) {
@@ -140,18 +179,28 @@ export class DigiScene extends Phaser.Scene {
     if (lastState.pickup?.active) {
       const isReset = lastState.pickup.kind === 'reset-trails';
 
-      this.pickupCircle
-        .setVisible(true)
-        .setPosition(lastState.pickup.x, lastState.pickup.y)
-        .setRadius(18)
-        .setFillStyle(isReset ? 0x38bdf8 : 0xf59e0b, 1)
-        .setStrokeStyle(3, 0xffffff, 0.95);
+      if (isReset) {
+        this.pickupBadge.clear();
+        this.pickupBadge.setVisible(false);
+        this.pickupCircle
+          .setVisible(true)
+          .setPosition(lastState.pickup.x, lastState.pickup.y)
+          .setRadius(18)
+          .setFillStyle(0x38bdf8, 1)
+          .setStrokeStyle(3, 0xffffff, 0.95);
 
-      this.pickupText
-        .setVisible(true)
-        .setPosition(lastState.pickup.x, lastState.pickup.y)
-        .setText(isReset ? '↺' : '◐');
+        this.pickupText
+          .setVisible(true)
+          .setPosition(lastState.pickup.x, lastState.pickup.y)
+          .setText('↺');
+      } else {
+        this.pickupCircle.setVisible(false);
+        this.pickupText.setVisible(false);
+        this.drawShufflePickupBadge(lastState.pickup.x, lastState.pickup.y);
+      }
     } else {
+      this.pickupBadge.clear();
+      this.pickupBadge.setVisible(false);
       this.pickupCircle.setVisible(false);
       this.pickupText.setVisible(false);
     }

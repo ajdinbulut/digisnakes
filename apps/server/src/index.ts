@@ -16,6 +16,7 @@ import {
   PLAYER_RADIUS,
   DRAW_DISTANCE,
   GAP_DISTANCE,
+  MAX_PLAYERS,
 } from './config/constants.js';
 import { dist } from './core/utils.js';
 import {
@@ -63,15 +64,17 @@ io.on('connection', (socket) => {
         lobby = createLobby(new Set(lobbies.keys()));
         lobbies.set(lobby.code, lobby);
       }
-      if (lobby.players.size >= 4) {
+      if (lobby.players.size >= MAX_PLAYERS) {
         socket.emit('toast', 'Lobby is full');
         return;
       }
       const spawn = getSpawn(lobby);
+      const baseColor = getNextPlayerColor(lobby);
       const player: Player = {
         id: socket.id,
         nickname: (payload.nickname || 'Player').slice(0, 18),
-        color: getNextPlayerColor(lobby),
+        color: baseColor,
+        baseColor,
         x: spawn.x,
         y: spawn.y,
         angle: spawn.angle,

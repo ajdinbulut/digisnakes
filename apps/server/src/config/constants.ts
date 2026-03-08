@@ -17,8 +17,16 @@ export const PICKUP_RADIUS = 18;
 export const MATCH_DURATION_MS = 5 * 60 * 1000;
 export const TICK_MS = 1000 / 30;
 export const DT = TICK_MS / 1000;
+export const MAX_PLAYERS = 6;
 
-export const COLORS: Color[] = ['#ff4d4f', '#3b82f6', '#facc15', '#22c55e'];
+export const COLORS: Color[] = [
+  '#ff4d4f',
+  '#3b82f6',
+  '#facc15',
+  '#22c55e',
+  '#f97316',
+  '#ffffff',
+];
 
 /** Minimum time (ms) in playing phase before round can end with one survivor. */
 export const MIN_PLAYING_MS = 2500;

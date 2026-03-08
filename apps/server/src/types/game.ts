@@ -5,12 +5,19 @@ export type Phase =
   | 'round-end'
   | 'finished';
 
-export type Color = '#ff4d4f' | '#3b82f6' | '#facc15' | '#22c55e';
+export type Color =
+  | '#ff4d4f'
+  | '#3b82f6'
+  | '#facc15'
+  | '#22c55e'
+  | '#f97316'
+  | '#ffffff';
 
 export type Player = {
   id: string;
   nickname: string;
   color: Color;
+  baseColor: Color;
   x: number;
   y: number;
   angle: number;

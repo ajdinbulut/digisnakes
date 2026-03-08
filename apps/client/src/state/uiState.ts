@@ -50,6 +50,9 @@ export function updateFromSnapshot(state: StateSnapshot): boolean {
   const previousWinnerText = ui.winnerText;
   const previousPlayersCount = ui.scoreboard.length;
   const previousSeconds = Math.ceil(ui.matchRemainingMs / 1000);
+  const previousScoreboardSignature = ui.scoreboard
+    .map((p) => `${p.id}:${p.nickname}:${p.score}:${p.color}`)
+    .join('|');
 
   lastState = state;
   ui.roomCode = state.roomCode;
@@ -69,13 +72,17 @@ export function updateFromSnapshot(state: StateSnapshot): boolean {
           : 'playing';
 
   const currentSeconds = Math.ceil(ui.matchRemainingMs / 1000);
+  const currentScoreboardSignature = ui.scoreboard
+    .map((p) => `${p.id}:${p.nickname}:${p.score}:${p.color}`)
+    .join('|');
 
   return (
     previousPhase !== ui.phase ||
     previousRoom !== ui.roomCode ||
     previousWinnerText !== ui.winnerText ||
     previousPlayersCount !== ui.scoreboard.length ||
-    previousSeconds !== currentSeconds
+    previousSeconds !== currentSeconds ||
+    previousScoreboardSignature !== currentScoreboardSignature
   );
 }
 
