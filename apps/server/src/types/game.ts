@@ -3,7 +3,6 @@ export type Phase =
   | 'countdown'
   | 'playing'
   | 'round-end'
-  | 'between-rounds'
   | 'finished';
 
 export type Color = '#ff4d4f' | '#3b82f6' | '#facc15' | '#22c55e';
@@ -55,11 +54,11 @@ export type Lobby = {
   code: string;
   phase: Phase;
   roundNumber: number;
-  totalRounds: number;
   roundPlayerCount: number;
   countdownRemaining: number;
   roundEndRemaining: number;
   roundStartedAt: number;
+  matchEndsAt: number;
   winnerText: string;
   players: Map<string, Player>;
   trails: Trail[];

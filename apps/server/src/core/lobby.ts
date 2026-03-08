@@ -5,7 +5,7 @@ import {
   WIDTH,
   HEIGHT,
   BORDER,
-  TOTAL_ROUNDS,
+  MATCH_DURATION_MS,
   COUNTDOWN_MS,
   SPAWN_NO_TRAIL_MS,
   DRAW_DISTANCE,
@@ -24,11 +24,11 @@ export function createLobby(existingCodes: Set<string>): Lobby {
     code,
     phase: 'waiting',
     roundNumber: 0,
-    totalRounds: TOTAL_ROUNDS,
     roundPlayerCount: 0,
     countdownRemaining: 0,
     roundEndRemaining: 0,
     roundStartedAt: 0,
+    matchEndsAt: 0,
     winnerText: '',
     players: new Map(),
     trails: [],
@@ -72,7 +72,10 @@ export function snapshot(lobby: Lobby, localPlayerId?: string) {
     phase: lobby.phase,
     roomCode: lobby.code,
     roundNumber: lobby.roundNumber,
-    totalRounds: lobby.totalRounds,
+    matchRemainingMs:
+      lobby.matchEndsAt > 0
+        ? Math.max(0, lobby.matchEndsAt - Date.now())
+        : MATCH_DURATION_MS,
     countdown: lobby.countdownRemaining / 1000,
     players: [...lobby.players.values()]
       .map((p) => ({
@@ -106,6 +109,15 @@ export function emitLobby(lobby: Lobby, io: Server): void {
   }
 }
 
+export function finishMatch(lobby: Lobby): void {
+  lobby.phase = 'finished';
+  lobby.matchEndsAt = 0;
+  const sorted = [...lobby.players.values()].sort((a, b) => b.score - a.score);
+  lobby.winnerText = sorted[0]
+    ? `${sorted[0].nickname} wins the match!`
+    : 'Match finished';
+}
+
 export function startRound(lobby: Lobby, resetScores: boolean): void {
   console.log('startRound', {
     lobby: lobby.code,
@@ -116,6 +128,9 @@ export function startRound(lobby: Lobby, resetScores: boolean): void {
   if (resetScores) {
     for (const p of lobby.players.values()) p.score = 0;
     lobby.roundNumber = 1;
+    lobby.matchEndsAt = Date.now() + MATCH_DURATION_MS;
+  } else {
+    lobby.roundNumber += 1;
   }
 
   lobby.roundPlayerCount = lobby.players.size;

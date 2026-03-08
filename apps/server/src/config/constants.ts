@@ -13,7 +13,8 @@ export const SPAWN_NO_TRAIL_MS = 3000;
 export const ROUND_END_MS = 3500;
 export const COUNTDOWN_MS = 3000;
 export const PICKUP_RADIUS = 18;
-export const TOTAL_ROUNDS = 5;
+/** Match duration: 5 minutes. */
+export const MATCH_DURATION_MS = 5 * 60 * 1000;
 export const TICK_MS = 1000 / 30;
 export const DT = TICK_MS / 1000;
 

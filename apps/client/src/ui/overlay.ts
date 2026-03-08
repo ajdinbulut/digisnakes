@@ -76,6 +76,13 @@ function bindEvents() {
   }
 }
 
+function formatMatchTime(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
 function renderScoreboard(): string {
   return `<div class="score-list">${ui.scoreboard
     .map(
@@ -114,27 +121,20 @@ function renderCenterPanel(): string {
   </div>`;
 
   if (ui.phase === 'waiting')
-    return `<div class="center-panel"><div class="panel"><div class="title">Lobby</div><div class="subtitle">Share this room id: <strong>${ui.roomCode}</strong><br/>Players in lobby: <strong>${ui.scoreboard.length}</strong><br/>Need at least 2 players. Any player can press start.<br/>Pickup icons: <strong>↺</strong> reset trails, <strong>◐</strong> shuffle colors</div><button id="startBtn" class="button">Start match</button>${renderScoreboard()}</div></div>`;
+    return `<div class="center-panel"><div class="panel"><div class="title">Lobby</div><div class="subtitle">Share this room id: <strong>${ui.roomCode}</strong><br/>Players in lobby: <strong>${ui.scoreboard.length}</strong><br/>Match duration: <strong>5 minutes</strong><br/>Pickup icons: <strong>↺</strong> reset trails, <strong>◐</strong> shuffle colors</div><button id="startBtn" class="button">Start match</button>${renderScoreboard()}</div></div>`;
 
   if (ui.phase === 'round-end')
     return `<div class="center-panel"><div class="panel"><div class="title">Round finished</div><div class="subtitle">${ui.winnerText || 'Preparing next round...'}</div>${renderPlacements()}${renderScoreboard()}</div></div>`;
 
-  if (ui.phase === 'between-rounds')
-    return `<div class="center-panel"><div class="panel"><div class="title">Next round</div><div class="subtitle">${ui.winnerText || ''}</div>${renderScoreboard()}<button id="startBtn" class="button">Start next round</button></div></div>`;
-
   if (ui.phase === 'finished')
-    return `<div class="center-panel"><div class="panel"><div class="title">Match finished</div><div class="subtitle">${ui.winnerText || '5 rounds completed.'}</div>${renderScoreboard()}<button id="startBtn" class="button">Start new match</button><button id="backBtn" class="button secondary">Back to menu</button></div></div>`;
+    return `<div class="center-panel"><div class="panel"><div class="title">Match finished</div><div class="subtitle">${ui.winnerText || ''}</div>${renderScoreboard()}<button id="startBtn" class="button">Start new match</button><button id="backBtn" class="button secondary">Back to menu</button></div></div>`;
 
   return '';
 }
 
 function renderOverlayContent(): void {
-  const roundValue =
-    ui.phase === 'waiting'
-      ? 'Waiting'
-      : ui.phase === 'between-rounds'
-        ? 'Next round'
-        : `${ui.roundNumber}/${ui.totalRounds}`;
+  const timeValue =
+    ui.phase === 'waiting' ? '05:00' : formatMatchTime(ui.matchRemainingMs);
 
   overlayEl.innerHTML = `
     <div class="top-row">
@@ -143,8 +143,8 @@ function renderOverlayContent(): void {
         <div class="value">${ui.roomCode || '—'}</div>
       </div>
       <div class="card metric">
-        <div class="label">Round</div>
-        <div class="value">${roundValue}</div>
+        <div class="label">Time</div>
+        <div class="value">${timeValue}</div>
       </div>
     </div>
 

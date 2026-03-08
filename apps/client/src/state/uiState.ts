@@ -4,7 +4,7 @@ export type UiState = {
   phase: Phase;
   roomCode: string;
   roundNumber: number;
-  totalRounds: number;
+  matchRemainingMs: number;
   scoreboard: PlayerSnapshot[];
   toast: string;
   placements: PlacementRow[];
@@ -17,7 +17,7 @@ export const ui: UiState = {
   phase: 'menu',
   roomCode: '',
   roundNumber: 0,
-  totalRounds: 5,
+  matchRemainingMs: 5 * 60 * 1000,
   scoreboard: [] as PlayerSnapshot[],
   toast: '',
   placements: [] as PlacementRow[],
@@ -49,11 +49,12 @@ export function updateFromSnapshot(state: StateSnapshot): boolean {
   const previousRoom = ui.roomCode;
   const previousWinnerText = ui.winnerText;
   const previousPlayersCount = ui.scoreboard.length;
+  const previousSeconds = Math.ceil(ui.matchRemainingMs / 1000);
 
   lastState = state;
   ui.roomCode = state.roomCode;
   ui.roundNumber = state.roundNumber;
-  ui.totalRounds = state.totalRounds;
+  ui.matchRemainingMs = state.matchRemainingMs;
   ui.scoreboard = [...state.players].sort((a, b) => b.score - a.score);
   ui.placements = state.placements;
   ui.winnerText = state.winnerText;
@@ -63,17 +64,18 @@ export function updateFromSnapshot(state: StateSnapshot): boolean {
       ? 'waiting'
       : state.phase === 'round-end'
         ? 'round-end'
-        : state.phase === 'between-rounds'
-          ? 'between-rounds'
-          : state.phase === 'finished'
-            ? 'finished'
-            : 'playing';
+        : state.phase === 'finished'
+          ? 'finished'
+          : 'playing';
+
+  const currentSeconds = Math.ceil(ui.matchRemainingMs / 1000);
 
   return (
     previousPhase !== ui.phase ||
     previousRoom !== ui.roomCode ||
     previousWinnerText !== ui.winnerText ||
-    previousPlayersCount !== ui.scoreboard.length
+    previousPlayersCount !== ui.scoreboard.length ||
+    previousSeconds !== currentSeconds
   );
 }
 

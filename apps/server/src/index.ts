@@ -14,7 +14,6 @@ import {
   DT,
   PICKUP_RADIUS,
   PLAYER_RADIUS,
-  TOTAL_ROUNDS,
   DRAW_DISTANCE,
   GAP_DISTANCE,
 } from './config/constants.js';
@@ -35,6 +34,7 @@ import {
   getSpawn,
   emitLobby,
   startRound,
+  finishMatch,
   getNextPlayerColor,
 } from './core/lobby.js';
 
@@ -100,22 +100,13 @@ io.on('connection', (socket) => {
   socket.on('startGame', () => {
     const lobby = [...lobbies.values()].find((l) => l.players.has(socket.id));
     if (!lobby || lobby.players.size < 2) {
-      if (lobby && lobby.players.size < 2)
+      if (lobby && lobby.players.size < 2) {
         socket.emit('toast', 'Need at least 2 players in the same lobby');
+      }
       return;
     }
-    if (lobby.phase === 'waiting') {
-      startRound(lobby, true);
-      emitLobby(lobby, io);
-      return;
-    }
-    if (lobby.phase === 'between-rounds') {
-      lobby.roundNumber += 1;
-      startRound(lobby, false);
-      emitLobby(lobby, io);
-      return;
-    }
-    if (lobby.phase === 'finished') {
+
+    if (lobby.phase === 'waiting' || lobby.phase === 'finished') {
       startRound(lobby, true);
       emitLobby(lobby, io);
     }
@@ -139,14 +130,18 @@ io.on('connection', (socket) => {
 setInterval(() => {
   const now = Date.now();
   for (const lobby of lobbies.values()) {
-    if (
-      lobby.phase === 'waiting' ||
-      lobby.phase === 'finished' ||
-      lobby.phase === 'between-rounds'
-    ) {
+    if (lobby.phase === 'waiting' || lobby.phase === 'finished') {
       emitLobby(lobby, io);
       continue;
     }
+
+    const matchExpired = lobby.matchEndsAt > 0 && now >= lobby.matchEndsAt;
+    if (matchExpired) {
+      finishMatch(lobby);
+      emitLobby(lobby, io);
+      continue;
+    }
+
     if (lobby.phase === 'countdown') {
       lobby.countdownRemaining -= TICK_MS;
       if (lobby.countdownRemaining <= 0) {
@@ -159,16 +154,12 @@ setInterval(() => {
     if (lobby.phase === 'round-end') {
       lobby.roundEndRemaining -= TICK_MS;
       if (lobby.roundEndRemaining <= 0) {
-        if (lobby.roundNumber >= TOTAL_ROUNDS) {
-          lobby.phase = 'finished';
-          const sorted = [...lobby.players.values()].sort(
-            (a, b) => b.score - a.score
-          );
-          lobby.winnerText = sorted[0]
-            ? `${sorted[0].nickname} wins the match!`
-            : 'Match finished';
+        const expiredAfterPause =
+          lobby.matchEndsAt > 0 && Date.now() >= lobby.matchEndsAt;
+        if (expiredAfterPause) {
+          finishMatch(lobby);
         } else {
-          lobby.phase = 'between-rounds';
+          startRound(lobby, false);
         }
       }
       emitLobby(lobby, io);

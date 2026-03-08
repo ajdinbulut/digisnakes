@@ -3,7 +3,6 @@ export type Phase =
   | 'waiting'
   | 'playing'
   | 'round-end'
-  | 'between-rounds'
   | 'finished';
 
 export type TurnDirection = -1 | 0 | 1;
@@ -29,16 +28,10 @@ export type TrailSnapshot = {
 };
 
 export type StateSnapshot = {
-  phase:
-    | 'waiting'
-    | 'countdown'
-    | 'playing'
-    | 'round-end'
-    | 'between-rounds'
-    | 'finished';
+  phase: 'waiting' | 'countdown' | 'playing' | 'round-end' | 'finished';
   roomCode: string;
   roundNumber: number;
-  totalRounds: number;
+  matchRemainingMs: number;
   countdown: number;
   players: PlayerSnapshot[];
   trails: TrailSnapshot[];

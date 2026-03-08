@@ -1,5 +1,5 @@
 import type { Lobby, Player, Placement } from '../types/game.js';
-import { ROUND_END_MS, TOTAL_ROUNDS, MIN_PLAYING_MS } from '../config/constants.js';
+import { ROUND_END_MS, MIN_PLAYING_MS } from '../config/constants.js';
 
 export function getPointsForPlacement(
   roundPlayerCount: number,
